@@ -65,7 +65,7 @@ Backend (.env file at backend/.env):
 1. Sign up or log in via the frontend.
 2. Choose a chat mode.
 3. Read the generated scenario.
-4. Type or speak your Mandarin message.
+4. Type your Mandarin message. (speaking not yet available)
 5. Receive AI responses at your level.
 6. Toggle English + pinyin output as needed.
 7. End session to get detailed feedback and per-message grading.
