@@ -4,6 +4,7 @@ import { useAuth } from "@/auth/AuthUserProvider";
 import Navbar01Page from "@/components/navbar-01/navbar-01";
 import Hero05 from "@/components/hero-05/hero-05";
 import SignupPage from "./app/signup/page";
+import ChatPage      from "@/pages/ChatPage";
 
 function App() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ function App() {
           }
         />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/chat" element={<ChatPage />} />
       </Routes>
     </>
   );

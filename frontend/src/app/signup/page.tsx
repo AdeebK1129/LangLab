@@ -1,7 +1,11 @@
+// frontend/src/app/signup/page.tsx
 "use client";
 
+import { useNavigate, Link } from "react-router-dom";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/utils/firebase";
+
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 import {
   Form,
   FormControl,
@@ -12,55 +16,53 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { signIn } from "@/auth/auth";   
+import { signIn } from "@/auth/auth";
 import { z } from "zod";
-
-
 
 const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8, "Password must be at least 8 characters long"),
 });
 
-const SignUp02Page = () => {
-
+export default function SignUp02Page() {
   const navigate = useNavigate();
 
+  // Google popup
   const handleGoogle = async () => {
     const result = await signIn();
     if (result?.user) {
-      // you’re now signed in, redirect wherever makes sense
       navigate("/");
     }
   };
 
+  // react-hook-form setup
   const form = useForm<z.infer<typeof formSchema>>({
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { email: "", password: "" },
     resolver: zodResolver(formSchema),
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data);
+  // ←– NEW: actually create the user with email/password
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    try {
+      await createUserWithEmailAndPassword(auth, data.email, data.password);
+      // auth state changes → our AuthUserProvider will POST /api/users/profile
+      navigate("/");
+    } catch (err: unknown) {
+      console.error("Email sign-up failed:", err);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-sm w-full flex flex-col items-center border rounded-lg p-6 shadow-sm">
-        {/* <Logo className="h-9 w-9" /> */}
         <p className="mt-4 text-xl font-bold tracking-tight">
           Sign up for Shadcn UI Blocks
         </p>
 
-        <Button
-          onClick={handleGoogle}
-          className="mt-8 w-full gap-3"
-        >
+        <Button onClick={handleGoogle} className="mt-8 w-full gap-3">
           <GoogleLogo />
           Continue with Google
         </Button>
@@ -94,6 +96,7 @@ const SignUp02Page = () => {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="password"
@@ -112,6 +115,7 @@ const SignUp02Page = () => {
                 </FormItem>
               )}
             />
+
             <Button type="submit" className="mt-4 w-full">
               Continue with Email
             </Button>
@@ -120,14 +124,14 @@ const SignUp02Page = () => {
 
         <p className="mt-5 text-sm text-center">
           Already have an account?
-          <Link to="#" className="ml-1 underline text-muted-foreground">
+          <Link to="/login" className="ml-1 underline text-muted-foreground">
             Log in
           </Link>
         </p>
       </div>
     </div>
   );
-};
+}
 
 const GoogleLogo = () => (
   <svg
@@ -165,4 +169,3 @@ const GoogleLogo = () => (
   </svg>
 );
 
-export default SignUp02Page;
