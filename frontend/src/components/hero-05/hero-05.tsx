@@ -1,10 +1,13 @@
 // frontend/src/components/hero-05/Hero05.tsx
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ArrowUpRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero_image.png";
+import {Badge} from '@/components/ui/badge';
+import {Button} from '@/components/ui/button';
+import {ArrowUpRight} from 'lucide-react';
+import {Link} from 'react-router-dom';
+import heroImage from '@/assets/hero_image.png';
 
+/**
+ * Hero landing component for the home page
+ */
 const Hero05 = () => {
   return (
     <div className="min-h-screen flex items-center justify-center overflow-hidden bg-white">

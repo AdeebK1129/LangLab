@@ -1,11 +1,11 @@
 // frontend/src/app/signup/page.tsx
-"use client";
+'use client';
 
-import { useNavigate, Link } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/utils/firebase";
+import {useNavigate, Link} from 'react-router-dom';
+import {createUserWithEmailAndPassword} from 'firebase/auth';
+import {auth} from '@/utils/firebase';
 
-import { Button } from "@/components/ui/button";
+import {Button} from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -13,45 +13,56 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+} from '@/components/ui/form';
+import {Input} from '@/components/ui/input';
+import {Separator} from '@/components/ui/separator';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { signIn } from "@/auth/auth";
-import { z } from "zod";
+import {zodResolver} from '@hookform/resolvers/zod';
+import {useForm} from 'react-hook-form';
+import {signIn} from '@/auth/auth';
+import {z} from 'zod';
 
+/**
+ * Form validation schema for signup
+ */
 const formSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
+  password: z.string().min(8, 'Password must be at least 8 characters long'),
 });
 
+/**
+ * Signup page component with email and Google authentication options
+ */
 export default function SignUp02Page() {
   const navigate = useNavigate();
 
-  // Google popup
+  /**
+   * Handles Google authentication signup
+   */
   const handleGoogle = async () => {
     const result = await signIn();
     if (result?.user) {
-      navigate("/");
+      navigate('/');
     }
   };
 
   // react-hook-form setup
   const form = useForm<z.infer<typeof formSchema>>({
-    defaultValues: { email: "", password: "" },
+    defaultValues: {email: '', password: ''},
     resolver: zodResolver(formSchema),
   });
 
-  // ←– NEW: actually create the user with email/password
+  /**
+   * Handles form submission for email/password signup
+   * @param data Form values containing email and password
+   */
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
       await createUserWithEmailAndPassword(auth, data.email, data.password);
       // auth state changes → our AuthUserProvider will POST /api/users/profile
-      navigate("/");
+      navigate('/');
     } catch (err: unknown) {
-      console.error("Email sign-up failed:", err);
+      console.error('Email sign-up failed:', err);
     }
   };
 
@@ -59,7 +70,7 @@ export default function SignUp02Page() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="max-w-sm w-full flex flex-col items-center border rounded-lg p-6 shadow-sm">
         <p className="mt-4 text-xl font-bold tracking-tight">
-          Sign up for Shadcn UI Blocks
+          Sign up for LangLab
         </p>
 
         <Button onClick={handleGoogle} className="mt-8 w-full gap-3">
@@ -81,7 +92,7 @@ export default function SignUp02Page() {
             <FormField
               control={form.control}
               name="email"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
@@ -100,7 +111,7 @@ export default function SignUp02Page() {
             <FormField
               control={form.control}
               name="password"
-              render={({ field }) => (
+              render={({field}) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
@@ -133,6 +144,9 @@ export default function SignUp02Page() {
   );
 }
 
+/**
+ * Google logo SVG component
+ */
 const GoogleLogo = () => (
   <svg
     width="1.2em"
@@ -168,4 +182,3 @@ const GoogleLogo = () => (
     </defs>
   </svg>
 );
-

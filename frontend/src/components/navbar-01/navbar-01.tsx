@@ -1,20 +1,26 @@
-import { Button } from "@/components/ui/button";
-import logoSvg from "@/assets/logo.svg";
-import { NavMenu } from "./nav-menu";
-import { NavigationSheet } from "./navigation-sheet";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/auth/AuthUserProvider";
-import { signOut } from "@/auth/auth";
+import {Button} from '@/components/ui/button';
+import logoSvg from '@/assets/logo.svg';
+import {NavMenu} from './nav-menu';
+import {NavigationSheet} from './navigation-sheet';
+import {Link, useNavigate} from 'react-router-dom';
+import {useAuth} from '@/auth/AuthUserProvider';
+import {signOut} from '@/auth/auth';
 
+/**
+ * Primary navigation bar component for the application
+ */
 const Navbar01Page = () => {
-  const { user } = useAuth();
+  const {user} = useAuth();
   const navigate = useNavigate();
 
+  /**
+   * Handles user sign out and redirects to home page
+   */
   const handleSignOut = async () => {
     await signOut();
     // onAuthStateChanged will clear the user in context,
     // now push back to home (or wherever you like)
-    navigate("/");
+    navigate('/');
   };
 
   return (
@@ -22,12 +28,12 @@ const Navbar01Page = () => {
       <div className="h-full flex items-center justify-between max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center">
           <img 
-              src={logoSvg} 
-              alt="Logo" 
-              width="50" 
-              height="50"
-              className="text-foreground" // Preserves the color styling
-            />
+            src={logoSvg} 
+            alt="Logo" 
+            width="50" 
+            height="50"
+            className="text-foreground" // Preserves the color styling
+          />
         </Link>
 
         {/* Desktop Menu */}

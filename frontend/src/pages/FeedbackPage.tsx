@@ -1,13 +1,19 @@
 // frontend/src/pages/FeedbackPage.tsx
-import { useEffect } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import type { ChatMessage } from "./ChatPage";
+import {useEffect} from 'react';
+import {useLocation, useNavigate, useParams} from 'react-router-dom';
+import type {ChatMessage} from './ChatPage';
 
+/**
+ * Results from the feedback analysis of a conversation
+ */
 interface FeedbackResult {
   score: number;
-  perMessage: Array<{ id: string; correct: boolean; feedback: string }>;
+  perMessage: Array<{id: string; correct: boolean; feedback: string}>;
 }
 
+/**
+ * Data passed through router state to the feedback page
+ */
 interface LocationState {
   context: string;
   conversation: ChatMessage[];
@@ -15,21 +21,24 @@ interface LocationState {
   newWordsCount: number;
 }
 
+/**
+ * Page that displays conversation feedback and scoring after a chat session
+ */
 export default function FeedbackPage() {
-  const { mode } = useParams<{ mode: string }>();
+  const {mode} = useParams<{mode: string}>();
   const navigate = useNavigate();
-  const { state } = useLocation();
+  const {state} = useLocation();
   const s = (state as LocationState) || null;
 
   useEffect(() => {
     if (!s || !s.conversation || !s.feedback || !mode) {
-      navigate(`/chat/${mode ?? ""}`, { replace: true });
+      navigate(`/chat/${mode ?? ''}`, {replace: true});
     }
   }, [s, mode, navigate]);
 
   if (!s) return null;
 
-  // build a lookup from message‐id → feedback metadata
+  // Build a lookup from message-id → feedback metadata
   const lookup = new Map(s.feedback.perMessage.map((p) => [p.id, p]));
 
   return (
@@ -45,8 +54,8 @@ export default function FeedbackPage() {
         <h2 className="font-semibold">Your Conversation</h2>
         {s.conversation.map((msg) => {
           const info = lookup.get(msg.id);
-          // Un‐graded assistant messages
-          if (msg.role === "assistant" || !info) {
+          // Un-graded assistant messages
+          if (msg.role === 'assistant' || !info) {
             return (
               <div key={msg.id} className="ml-4">
                 <div className="text-xs text-gray-500 capitalize">
@@ -69,8 +78,8 @@ export default function FeedbackPage() {
                 className={`
                   p-2 my-1 rounded-lg border 
                   ${info.correct
-                    ? "bg-green-50 border-green-300"
-                    : "bg-red-50 border-red-300"}
+                    ? 'bg-green-50 border-green-300'
+                    : 'bg-red-50 border-red-300'}
                 `}
               >
                 {msg.content}
@@ -104,7 +113,7 @@ export default function FeedbackPage() {
 
       <div className="text-center">
         <button
-          onClick={() => navigate(`/results/${mode}`, { state: s })}
+          onClick={() => navigate(`/results/${mode}`, {state: s})}
           className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition"
         >
           View Results
