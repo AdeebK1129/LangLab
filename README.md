@@ -4,6 +4,10 @@
 
 This project consists of a React frontend and an Express backend providing an AI-driven Mandarin chat tutoring experience. Learners progress through levels (beginner, intermediate, advanced, progression), practice conversation, and receive instant feedback, including optional English and pinyin output.
 
+UI Components Used:
+https://www.shadcnui-blocks.com/blocks
+https://shadcn-chatbot-kit.vercel.app/docs/components/chat
+
 ---
 
 ## Prerequisites
