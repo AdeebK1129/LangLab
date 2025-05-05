@@ -1,17 +1,27 @@
 // src/App.tsx
 import { Routes, Route } from "react-router-dom";
-import { useAuth } from "@/auth/AuthUserProvider";
+import { useAuth, useUserProfile } from "@/auth/AuthUserProvider";
 import Navbar01Page from "@/components/navbar-01/navbar-01";
 import Hero05 from "@/components/hero-05/hero-05";
 import SignupPage from "./app/signup/page";
 import LoginPage from "./app/login/page";
-import ChatPage      from "@/pages/ChatPage";
+import ChatPage from "@/pages/ChatPage";
 
-function App() {
+function InitProfile() {
+  // this hook will grab the ID token and POST /api/users/profile
+  // (now proxied to :8080) as soon as we have a logged-in user
+  useUserProfile();
+  return null;
+}
+
+export default function App() {
   const { user } = useAuth();
 
   return (
     <>
+      {/* kick off the profile‐upsert call */}
+      <InitProfile />
+
       {/* show navbar on every screen */}
       <Navbar01Page />
 
@@ -36,5 +46,3 @@ function App() {
     </>
   );
 }
-
-export default App;
