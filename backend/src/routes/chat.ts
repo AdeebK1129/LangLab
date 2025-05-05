@@ -136,7 +136,7 @@ router.post(
     }
     if (includeEnglishPinyin) {
       sys +=
-        " For each Chinese reply, include pinyin in parentheses and English in brackets.";
+        " For each Chinese reply, include pinyin in parentheses and English in brackets. DO NOT FORGET TO DO THIS IF INCLUDEPINYINENGLISH IS TOGGLED";
     }
 
     const messages: ChatCompletionMessageParam[] = [
