@@ -168,8 +168,8 @@ router.post(
       ? `Learner knows ONLY: ${knownWords.join(', ')}.`
       : undefined;
     const pinyinMsg = includeEnglishPinyin
-      ? 'For each Chinese reply where this exact message is in your prompt (if not in the prompt use only characters), include pinyin in parentheses and English in brackets.'
-      : undefined;
+      ? 'IMPORTANT: Format ALL your responses with Chinese characters followed by pinyin in parentheses and English in square brackets like this example:\n\n你好 (nǐ hǎo) [Hello]\n我是老师 (wǒ shì lǎoshī) [I am the teacher]\n\nEvery Chinese sentence or phrase MUST include both pinyin and English translation.'
+      : 'IMPORTANT: Reply using ONLY Chinese characters with NO pinyin and NO English translations. Do not include any parentheses, square brackets, or translations of any kind.';
 
       const systemMessages: ChatCompletionMessageParam[] = [
         { role: "system", content: context } as ChatCompletionMessageParam,
@@ -180,9 +180,7 @@ router.post(
         ...(progMsg
         ? [{ role: "system", content: progMsg } as ChatCompletionMessageParam]
         : []),
-        ...(pinyinMsg
-        ? [{ role: "system", content: pinyinMsg } as ChatCompletionMessageParam]
-        : []),
+        { role: "system", content: pinyinMsg } as ChatCompletionMessageParam,
     ];
 
     const messages: ChatCompletionMessageParam[] = [
