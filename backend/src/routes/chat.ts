@@ -168,7 +168,7 @@ router.post(
       ? `Learner knows ONLY: ${knownWords.join(', ')}.`
       : undefined;
     const pinyinMsg = includeEnglishPinyin
-      ? 'For each Chinese reply, include pinyin in parentheses and English in brackets.'
+      ? 'For each Chinese reply where this exact message is in your prompt (if not in the prompt use only characters), include pinyin in parentheses and English in brackets.'
       : undefined;
 
       const systemMessages: ChatCompletionMessageParam[] = [
