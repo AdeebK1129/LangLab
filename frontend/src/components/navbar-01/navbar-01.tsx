@@ -31,7 +31,7 @@ const Navbar01Page = () => {
           {/* if no user, show Sign In / Get Started */}
           {!user ? (
             <>
-              <Link to="/signup">
+              <Link to="/login">
                 <Button variant="outline" className="hidden sm:inline-flex">
                   Sign In
                 </Button>
