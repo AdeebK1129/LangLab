@@ -2,21 +2,26 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+dotenv.config(); 
 import multer from "multer";
 import OpenAI from "openai";
-import usersRouter from "./routes/users";  // ← new
+import usersRouter from "./routes/users";
+import chatRouter  from "./routes/chat";
 
-dotenv.config();
 const app = express();
 const port = process.env.PORT || 8080;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    exposedHeaders: ["Authorization"],
+  })
+);
 app.use(express.json());
 
-// 1) Mount our new user‐profile routes at /api/users
 app.use("/api/users", usersRouter);
+app.use("/api/chat", chatRouter);
 
-// 2) The rest of your endpoints...
 const upload = multer();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
