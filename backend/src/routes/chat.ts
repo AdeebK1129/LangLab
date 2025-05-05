@@ -30,14 +30,21 @@ const verifyUser = async (hdr?: string) => {
   }
 };
 
-const storeNewWords = async (uid: string, text: string) => {
-  const words = (text.match(/\p{Script=Hani}+/gu) ?? []).slice(0, 20);
-  if (!words.length) return;
-  const batch = db.batch();
-  const coll  = db.collection("users").doc(uid).collection("knownWords");
-  for (const w of words) {
+/**
+ * Persist individual Chinese characters (Hanzi), up to 50 unique chars per batch,
+ * and increment their count + timestamps.
+ */
+const storeNewChars = async (uid: string, text: string) => {
+  // match every single Han character
+  const chars = text.match(/\p{Script=Hani}/gu) ?? [];
+  if (!chars.length) return;
+  // dedupe & limit to first 50
+  const unique = Array.from(new Set(chars)).slice(0, 50);
+  const batch  = db.batch();
+  const coll   = db.collection("users").doc(uid).collection("knownWords");
+  for (const ch of unique) {
     batch.set(
-      coll.doc(w),
+      coll.doc(ch),
       {
         firstSeen:   FieldValue.serverTimestamp(),
         lastSeen:    FieldValue.serverTimestamp(),
@@ -128,7 +135,8 @@ router.post(
       sys += ` Learner knows ONLY: ${knownWords.join(", ")}.`;
     }
     if (includeEnglishPinyin) {
-      sys += " For each Chinese reply, include pinyin in parentheses and English in brackets.";
+      sys +=
+        " For each Chinese reply, include pinyin in parentheses and English in brackets.";
     }
 
     const messages: ChatCompletionMessageParam[] = [
@@ -149,12 +157,14 @@ router.post(
     });
 
     const reply = out.choices[0].message!.content!.trim();
-    await storeNewWords(user.uid, reply);
+    // now store individual chars, not sentences
+    await storeNewChars(user.uid, reply);
+
     res.json({ reply });
   }) as RequestHandler
 );
 
-/** 3️⃣  Finish & grade the session per‐message */
+/** 3️⃣  Finish & grade the session per-message */
 router.post(
   "/:mode/finish",
   (async (req, res) => {
@@ -166,7 +176,6 @@ router.post(
     const user = await verifyUser(req.headers.authorization);
     if (!user) return res.status(401).json({ error: "Auth required" });
 
-    // now expect IDs on each message
     const {
       context = "",
       conversation = [],
@@ -179,29 +188,29 @@ router.post(
       }>;
     } = req.body;
 
-    // 1️⃣ persist every turn’s new words
+    // 1️⃣ persist every turn’s new chars
     for (const m of conversation) {
-      await storeNewWords(user.uid, m.content);
+      await storeNewChars(user.uid, m.content);
     }
 
     // 2️⃣ prompt GPT to grade each learner turn
     const systemPrompt =
       `You are a strict but helpful Mandarin teacher.  ` +
-      `Grade each learner message for grammar, vocabulary, and relevance. Your comments MUST be in english but you can quote or suggest mandarin sentences to say so long as the user who you assume to be English can understand ` +
+      `Grade each learner message for grammar, vocabulary, and relevance. Your comments MUST be in English, but you can quote or suggest Mandarin sentences so long as an English speaker can understand. ` +
       `Output **only** valid JSON matching this exact shape: ` +
       `{"score":<1–10>,"perMessage":[` +
       `{"id":"<messageId>","correct":true|false,"feedback":"…"},…]}.`;
 
-    const messages: ChatCompletionMessageParam[] = [
-      { role: "system", content: systemPrompt },
-      ...(context
-        ? [{ role: "system", content: context }]
-        : []),
-      ...conversation.map((m) => ({
-        role:    m.role,
-        content: `[${m.id}] ${m.content}`,
-      })),
-    ] as ChatCompletionMessageParam[];
+      const messages: ChatCompletionMessageParam[] = [
+        { role: "system", content: systemPrompt },
+        ...(context
+          ? [{ role: "system", content: context }]
+          : []),
+        ...conversation.map((m) => ({
+          role:    m.role,
+          content: `[${m.id}] ${m.content}`,
+        })),
+      ] as ChatCompletionMessageParam[];
 
     const out = await openai.chat.completions.create({
       model:       "gpt-4o-mini",
@@ -210,7 +219,6 @@ router.post(
       messages,
     });
 
-    // parse into our shape
     type GraderOutput = {
       score: number;
       perMessage: Array<{ id: string; correct: boolean; feedback: string }>;
@@ -223,7 +231,6 @@ router.post(
       return res.status(500).json({ error: "Grader parse error" });
     }
 
-    // return grader JSON
     res.json(result);
   }) as RequestHandler
 );
