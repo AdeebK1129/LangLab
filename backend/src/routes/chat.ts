@@ -35,10 +35,8 @@ const verifyUser = async (hdr?: string) => {
  * and increment their count + timestamps.
  */
 const storeNewChars = async (uid: string, text: string) => {
-  // match every single Han character
   const chars = text.match(/\p{Script=Hani}/gu) ?? [];
   if (!chars.length) return;
-  // dedupe & limit to first 50
   const unique = Array.from(new Set(chars)).slice(0, 50);
   const batch  = db.batch();
   const coll   = db.collection("users").doc(uid).collection("knownWords");
@@ -95,7 +93,7 @@ router.get(
   }) as RequestHandler
 );
 
-/** 2️⃣  Respond within full history & toggle EN + 拼音 */
+/** 2️⃣  Respond within full history & toggle EN + 拼音 reactively */
 router.post(
   "/:mode/respond",
   (async (req, res) => {
@@ -122,26 +120,44 @@ router.post(
       userMessage,
     } = req.body as ReqBody;
 
-    // Off-topic guard
+    // 1️⃣ off‐topic guard
     const wroteChinese = /\p{Script=Hani}/u.test(
       conversation.map((m) => m.content).join(" ")
     );
-    const guard = !wroteChinese
+    const guardMsg = !wroteChinese
       ? "If the learner writes in English, immediately reply in Chinese and encourage them to continue in Mandarin!"
-      : "";
+      : undefined;
 
-    let sys = `${guard} ${MODE_INFO[mode]}`;
-    if (mode === "progression") {
-      sys += ` Learner knows ONLY: ${knownWords.join(", ")}.`;
-    }
-    if (includeEnglishPinyin) {
-      sys +=
-        " For each Chinese reply, include pinyin in parentheses and English in brackets. DO NOT FORGET TO DO THIS IF INCLUDEPINYINENGLISH IS TOGGLED";
-    }
+    // 2️⃣ base mode instruction
+    const modeMsg = MODE_INFO[mode];
 
+    // 3️⃣ progression-only reminder
+    const progMsg = mode === "progression"
+      ? `Learner knows ONLY: ${knownWords.join(", ")}.`
+      : undefined;
+
+    // 4️⃣ pinyin+English toggle
+    const pinyinMsg = includeEnglishPinyin
+      ? "For each Chinese reply, include pinyin in parentheses and English in brackets."
+      : undefined;
+
+    // assemble system messages
+    const systemMessages: ChatCompletionMessageParam[] = [
+        { role: "system", content: context } as ChatCompletionMessageParam,
+        ...(guardMsg
+        ? [{ role: "system", content: guardMsg } as ChatCompletionMessageParam]
+        : []),
+        { role: "system", content: modeMsg } as ChatCompletionMessageParam,
+        ...(progMsg
+        ? [{ role: "system", content: progMsg } as ChatCompletionMessageParam]
+        : []),
+        ...(pinyinMsg
+        ? [{ role: "system", content: pinyinMsg } as ChatCompletionMessageParam]
+        : []),
+    ];
+  
     const messages: ChatCompletionMessageParam[] = [
-      { role: "system", content: context },
-      { role: "system", content: sys },
+      ...systemMessages,
       ...conversation.map((m) => ({
         role:    m.role,
         content: m.content,
@@ -157,14 +173,13 @@ router.post(
     });
 
     const reply = out.choices[0].message!.content!.trim();
-    // now store individual chars, not sentences
     await storeNewChars(user.uid, reply);
 
     res.json({ reply });
   }) as RequestHandler
 );
 
-/** 3️⃣  Finish & grade the session per-message */
+/** 3️⃣  Finish & grade the session per‐message */
 router.post(
   "/:mode/finish",
   (async (req, res) => {
@@ -201,16 +216,14 @@ router.post(
       `{"score":<1–10>,"perMessage":[` +
       `{"id":"<messageId>","correct":true|false,"feedback":"…"},…]}.`;
 
-      const messages: ChatCompletionMessageParam[] = [
-        { role: "system", content: systemPrompt },
-        ...(context
-          ? [{ role: "system", content: context }]
-          : []),
-        ...conversation.map((m) => ({
-          role:    m.role,
-          content: `[${m.id}] ${m.content}`,
-        })),
-      ] as ChatCompletionMessageParam[];
+    const messages: ChatCompletionMessageParam[] = [
+      { role: "system", content: systemPrompt },
+      ...(context ? [{ role: "system", content: context }] : []),
+      ...conversation.map((m) => ({
+        role:    m.role,
+        content: `[${m.id}] ${m.content}`,
+      })),
+    ] as ChatCompletionMessageParam[];
 
     const out = await openai.chat.completions.create({
       model:       "gpt-4o-mini",
