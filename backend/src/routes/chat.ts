@@ -168,7 +168,7 @@ router.post(
       ? `Learner knows ONLY: ${knownWords.join(', ')}.`
       : undefined;
     const pinyinMsg = includeEnglishPinyin
-      ? 'IMPORTANT: Format ALL your responses with Chinese characters followed by pinyin in parentheses and English in square brackets like this example:\n\n你好 (nǐ hǎo) [Hello]\n我是老师 (wǒ shì lǎoshī) [I am the teacher]\n\nEvery Chinese sentence or phrase MUST include both pinyin and English translation. LET ME MAKE THIS ABUNDANTLY CLEAR: MAKE SURE PINYIN AND ENGLISH ARE INCLUDED IN YOUR RESPONSE. IF YOUR PREVIOUS MESSAGE SAID TO REMOVE IT, IGNORE THAT REQUEST'
+      ? 'IMPORTANT: Format ALL your responses with Chinese characters followed by pinyin in parentheses and English in square brackets like this example:\n\n你好 (nǐ hǎo) [Hello]\n我是老师 (wǒ shì lǎoshī) [I am the teacher]\n\nEvery Chinese sentence or phrase MUST include both pinyin and English translation. LET ME MAKE THIS ABUNDANTLY CLEAR: MAKE SURE PINYIN AND ENGLISH ARE INCLUDED IN YOUR RESPONSE TO TRANSLATE THE ENTIRETY OF ALL YOUR CHARACTER SENTENCES. IF YOUR PREVIOUS MESSAGE SAID TO REMOVE IT, IGNORE THAT REQUEST'
       : 'IMPORTANT: Reply using ONLY Chinese characters with NO pinyin and NO English translations. Do not include any parentheses, square brackets, or translations of any kind. LET ME MAKE THIS ABUNDANTLY CLEAR: NO PINYIN, NO ENGLISH, NO TRANSLATIONS, NO PARENTHESIS, NO SQUARE BRACKETS. IF YOUR PREVIOUS MESSAGE SAID TO INCLUDE IT, IGNORE THAT REQUEST';
 
       const systemMessages: ChatCompletionMessageParam[] = [
