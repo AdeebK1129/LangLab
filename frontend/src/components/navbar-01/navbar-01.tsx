@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Logo } from "./logo";
+import logoSvg from "@/assets/logo.svg";
 import { NavMenu } from "./nav-menu";
 import { NavigationSheet } from "./navigation-sheet";
 import { Link, useNavigate } from "react-router-dom";
@@ -21,7 +21,13 @@ const Navbar01Page = () => {
     <nav className="h-16 bg-background border-b">
       <div className="h-full flex items-center justify-between max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center">
-          <Logo />
+          <img 
+              src={logoSvg} 
+              alt="Logo" 
+              width="50" 
+              height="50"
+              className="text-foreground" // Preserves the color styling
+            />
         </Link>
 
         {/* Desktop Menu */}

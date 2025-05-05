@@ -84,8 +84,7 @@ router.get(
       messages,
     });
 
-    const scene = out.choices[0].message!.content!.trim();
-    res.json({ context: scene });
+    res.json({ context: out.choices[0].message!.content!.trim() });
   }) as RequestHandler
 );
 
@@ -116,7 +115,7 @@ router.post(
       userMessage,
     } = req.body as ReqBody;
 
-    // Off-topic guard: if learner hasn't used any Chinese yet
+    // Off-topic guard
     const wroteChinese = /\p{Script=Hani}/u.test(
       conversation.map((m) => m.content).join(" ")
     );
@@ -124,14 +123,12 @@ router.post(
       ? "If the learner writes in English, immediately reply in Chinese and encourage them to continue in Mandarin!"
       : "";
 
-    // build system prompt
     let sys = `${guard} ${MODE_INFO[mode]}`;
     if (mode === "progression") {
       sys += ` Learner knows ONLY: ${knownWords.join(", ")}.`;
     }
     if (includeEnglishPinyin) {
-      sys +=
-        " For each Chinese reply, include pinyin in parentheses and English in brackets.";
+      sys += " For each Chinese reply, include pinyin in parentheses and English in brackets.";
     }
 
     const messages: ChatCompletionMessageParam[] = [
@@ -153,12 +150,11 @@ router.post(
 
     const reply = out.choices[0].message!.content!.trim();
     await storeNewWords(user.uid, reply);
-
     res.json({ reply });
   }) as RequestHandler
 );
 
-/** 3️⃣  Finish & grade the session */
+/** 3️⃣  Finish & grade the session per‐message */
 router.post(
   "/:mode/finish",
   (async (req, res) => {
@@ -170,49 +166,65 @@ router.post(
     const user = await verifyUser(req.headers.authorization);
     if (!user) return res.status(401).json({ error: "Auth required" });
 
+    // now expect IDs on each message
     const {
       context = "",
       conversation = [],
     }: {
       context?: string;
-      conversation: { role: "user" | "assistant"; content: string }[];
+      conversation: Array<{
+        id:      string;
+        role:    "user" | "assistant";
+        content: string;
+      }>;
     } = req.body;
 
-    // 1 persist all new characters from every turn
+    // 1️⃣ persist every turn’s new words
     for (const m of conversation) {
-      if (m.role === "user" || m.role === "assistant") {
-        await storeNewWords(user.uid, m.content);
-      }
+      await storeNewWords(user.uid, m.content);
     }
 
-    // 2 grade only the learner’s turns
-    const messages = [
-        {
-          role:    "system" as const,
-          content: 'You are a strict but helpful Mandarin teacher…',
-        },
-        ...(context
-          ? [{ role: "system" as const, content: context }]
-          : []),
-        ...conversation.map((m) => ({
-          role:    m.role as "user" | "assistant",
-          content: m.content,
-        })),
-      ] as ChatCompletionMessageParam[];
+    // 2️⃣ prompt GPT to grade each learner turn
+    const systemPrompt =
+      `You are a strict but helpful Mandarin teacher.  ` +
+      `Grade each learner message for grammar, vocabulary, and relevance. Your comments MUST be in english but you can quote or suggest mandarin sentences to say so long as the user who you assume to be English can understand ` +
+      `Output **only** valid JSON matching this exact shape: ` +
+      `{"score":<1–10>,"perMessage":[` +
+      `{"id":"<messageId>","correct":true|false,"feedback":"…"},…]}.`;
+
+    const messages: ChatCompletionMessageParam[] = [
+      { role: "system", content: systemPrompt },
+      ...(context
+        ? [{ role: "system", content: context }]
+        : []),
+      ...conversation.map((m) => ({
+        role:    m.role,
+        content: `[${m.id}] ${m.content}`,
+      })),
+    ] as ChatCompletionMessageParam[];
+
     const out = await openai.chat.completions.create({
       model:       "gpt-4o-mini",
       temperature: 0,
-      max_tokens: 200,
+      max_tokens: 500,
       messages,
     });
 
-    let parsed = { score: 5, feedback: "No feedback." };
+    // parse into our shape
+    type GraderOutput = {
+      score: number;
+      perMessage: Array<{ id: string; correct: boolean; feedback: string }>;
+    };
+    let result: GraderOutput = { score: 0, perMessage: [] };
     try {
-      parsed = JSON.parse(out.choices[0].message!.content!);
-    } catch {
-      // ignore parse errors
+      result = JSON.parse(out.choices[0].message!.content!);
+    } catch (e) {
+      console.error("Grader parse error:", e);
+      return res.status(500).json({ error: "Grader parse error" });
     }
-    res.json(parsed);
+
+    // return grader JSON
+    res.json(result);
   }) as RequestHandler
 );
 

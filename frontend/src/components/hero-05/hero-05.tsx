@@ -1,40 +1,52 @@
+// frontend/src/components/hero-05/Hero05.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, CirclePlay } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import heroImage from "@/assets/hero_image.png";
 
 const Hero05 = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center overflow-hidden">
-      <div className="max-w-screen-xl w-full mx-auto grid lg:grid-cols-2 gap-12 px-6 py-12 lg:py-0">
-        <div className="my-auto">
-          <Badge className="bg-gradient-to-br via-70% from-primary via-muted/30 to-primary rounded-full py-1 border-none">
-            Just released v1.0.0
+    <div className="min-h-screen flex items-center justify-center overflow-hidden bg-white">
+      {/* change here: use 40%/60% split instead of equal halves */}
+      <div className="max-w-screen-xl w-full mx-auto grid lg:[grid-template-columns:40%_60%] gap-12 px-6 py-12 lg:py-0">
+        {/* left side */}
+        <div className="my-auto space-y-6">
+          <Badge className="bg-gradient-to-br from-purple-500 via-indigo-500 to-blue-500 text-white rounded-full py-1 px-3 text-sm font-semibold border-none">
+            Now Live – v1.0.0
           </Badge>
-          <h1 className="mt-6 max-w-[17ch] text-4xl md:text-5xl lg:text-[2.75rem] xl:text-5xl font-bold !leading-[1.2] tracking-tight">
-            Customized Shadcn UI Blocks & Components
+
+          <h1 className="mt-4 text-4xl md:text-5xl lg:text-[2.75rem] xl:text-5xl font-bold leading-tight tracking-tight text-gray-900">
+            AI-Powered Mandarin Chat Tutor
           </h1>
-          <p className="mt-6 max-w-[60ch] text-lg">
-            Explore a collection of Shadcn UI blocks and components, ready to
-            preview and copy. Streamline your development workflow with
-            easy-to-implement examples.
+
+          <p className="mt-4 max-w-[60ch] text-lg text-gray-700">
+            Practice real-world Mandarin conversations—at your own level. Our AI
+            tutor adapts in real time, giving instant feedback on pronunciation,
+            grammar, and vocabulary. Speak or type, then track your progress
+            from HSK 1 to fluency with confidence.
           </p>
-          <div className="mt-12 flex items-center gap-4">
+
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link to="/signup">
-              <Button size="lg" className="rounded-full text-base">
-                Get Started <ArrowUpRight className="!h-5 !w-5" />
+              <Button
+                size="lg"
+                className="rounded-full text-base bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+              >
+                Get Started <ArrowUpRight className="!h-5 !w-5 ml-1" />
               </Button>
             </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="rounded-full text-base shadow-none"
-            >
-              <CirclePlay className="!h-5 !w-5" /> Watch Demo
-            </Button>
           </div>
         </div>
-        <div className="w-full aspect-video lg:aspect-auto lg:w-[1000px] lg:h-screen bg-accent rounded-xl lg:rounded-none" />
+
+        {/* right image */}
+        <div className="w-full aspect-video lg:aspect-auto lg:h-screen rounded-xl overflow-hidden">
+          <img
+            src={heroImage}
+            alt="Student practicing Mandarin on a phone"
+            className="w-full h-full object-cover"
+          />
+        </div>
       </div>
     </div>
   );

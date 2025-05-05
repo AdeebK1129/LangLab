@@ -1,22 +1,17 @@
-// frontend/src/pages/ChatPage.tsx
 import { useState, useEffect, FormEvent } from "react";
-import {
-  useParams,
-  useNavigate,
-  Navigate,
-} from "react-router-dom";
-import { nanoid }                      from "nanoid";
-import { MessageInput }                from "@/components/ui/message-input";
-import { MessageList }                 from "@/components/ui/message-list";
-import { useAuth }                     from "@/auth/AuthUserProvider";
-import { addWord, fetchKnownWords }    from "@/utils/vocab";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { nanoid } from "nanoid";
+import { MessageInput } from "@/components/ui/message-input";
+import { MessageList } from "@/components/ui/message-list";
+import { useAuth } from "@/auth/AuthUserProvider";
+import { addWord, fetchKnownWords } from "@/utils/vocab";
 
 type ChatMode = "beginner" | "intermediate" | "advanced" | "progression";
 
 export interface ChatMessage {
-  id:        string;
-  role:      "user" | "assistant";
-  content:   string;
+  id: string;
+  role: "user" | "assistant";
+  content: string;
   createdAt: Date;
 }
 
@@ -25,29 +20,25 @@ export default function ChatPage() {
   const { mode } = useParams<{ mode: ChatMode }>();
   const navigate = useNavigate();
 
-  const [context, setContext]               = useState("");
+  const [context, setContext] = useState("");
   const [loadingContext, setLoadingContext] = useState(true);
-  const [conversation, setConversation]     = useState<ChatMessage[]>([]);
-  const [knownWords, setKnownWords]         = useState<string[]>([]);
-  const [input, setInput]                   = useState("");
-  const [isGenerating, setIsGenerating]     = useState(false);
-  const [includeEP, setIncludeEP]           = useState(false);
+  const [conversation, setConversation] = useState<ChatMessage[]>([]);
+  const [knownWords, setKnownWords] = useState<string[]>([]);
+  const [input, setInput] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [includeEP, setIncludeEP] = useState(false);
 
   // 1) load knownWords + fetch scenario
   useEffect(() => {
     if (!user || !mode) return;
-
     (async () => {
       setLoadingContext(true);
-
       try {
-        // load previously‐seen words
         const kw = await fetchKnownWords(user.uid);
         setKnownWords(kw);
 
-        // fetch scenario
         const token = await user.getIdToken();
-        const res   = await fetch(`/api/chat/context/${mode}`, {
+        const res = await fetch(`/api/chat/context/${mode}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
@@ -66,19 +57,14 @@ export default function ChatPage() {
     })();
   }, [user, mode]);
 
-  // guard: not logged in
   if (!user) return <Navigate to="/" replace />;
-
-  // guard: still loading
-  if (loadingContext) {
+  if (loadingContext)
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-lg font-medium">Loading scenario…</div>
       </div>
     );
-  }
 
-  // speech → text helper
   const transcribeAudio = async (blob: Blob): Promise<string> => {
     const form = new FormData();
     form.append("file", blob, "speech.webm");
@@ -93,11 +79,10 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!input.trim() || !mode) return;
 
-    // add user message
     const userMsg: ChatMessage = {
-      id:        nanoid(),
-      role:      "user",
-      content:   input,
+      id: nanoid(),
+      role: "user",
+      content: input,
       createdAt: new Date(),
     };
     setConversation((c) => [...c, userMsg]);
@@ -105,37 +90,35 @@ export default function ChatPage() {
     setIsGenerating(true);
 
     try {
-      // call your /respond endpoint
       const token = await user.getIdToken();
-      const res   = await fetch(`/api/chat/${mode}/respond`, {
-        method:  "POST",
+      const res = await fetch(`/api/chat/${mode}/respond`, {
+        method: "POST",
         headers: {
-          "Content-Type":  "application/json",
-          Authorization:   `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           context,
           conversation: conversation.map((m) => ({
-            role:    m.role,
+            role: m.role,
             content: m.content,
           })),
           knownWords,
-          includeEnglishPinyin: includeEP,
-          userMessage:         userMsg.content,
+          includeEnglishPinyin: includeEP, // always current
+          userMessage: userMsg.content,
         }),
       });
       const { reply } = await res.json();
 
-      // add AI message
       const aiMsg: ChatMessage = {
-        id:        nanoid(),
-        role:      "assistant",
-        content:   reply,
+        id: nanoid(),
+        role: "assistant",
+        content: reply,
         createdAt: new Date(),
       };
       setConversation((c) => [...c, aiMsg]);
 
-      // extract, dedupe, and store new Chinese chars
+      // store new Chinese chars
       const raw = reply.match(/\p{Script=Hani}+/gu) ?? [];
       const unseen = raw.filter((w: string) => !knownWords.includes(w));
       const uniqueNew: string[] = Array.from(new Set(unseen));
@@ -153,34 +136,36 @@ export default function ChatPage() {
   const handleEnd = async () => {
     if (!mode) return;
     const token = await user.getIdToken();
-    const res   = await fetch(`/api/chat/${mode}/finish`, {
-      method:  "POST",
+    const res = await fetch(`/api/chat/${mode}/finish`, {
+      method: "POST",
       headers: {
-        "Content-Type":  "application/json",
-        Authorization:   `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ context, conversation }),
     });
     const feedback = await res.json();
     navigate(`/feedback/${mode}`, {
-      state: { context, conversation, feedback, newWordsCount: knownWords.length },
+      state: {
+        context,
+        conversation,
+        feedback,
+        newWordsCount: knownWords.length,
+      },
     });
   };
 
   return (
     <div className="h-full flex flex-col">
-      {/* Scenario banner */}
       <div className="p-4 bg-gray-50 rounded-lg shadow-sm m-4">
         <strong>Scenario:</strong>
         <p className="mt-2">{context}</p>
       </div>
 
-      {/* Conversation history */}
       <div className="flex-1 overflow-auto p-4">
         <MessageList messages={conversation} isTyping={isGenerating} />
       </div>
 
-      {/* EN+拼音 toggle + End button */}
       <div className="flex items-center px-4 space-x-4 mb-2">
         <label className="inline-flex items-center space-x-2">
           <input
@@ -198,7 +183,6 @@ export default function ChatPage() {
         </button>
       </div>
 
-      {/* Message input */}
       <form
         onSubmit={(e: FormEvent) => {
           e.preventDefault();
